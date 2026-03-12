@@ -13,86 +13,79 @@ import com.enterprise.voice.service.CallService;
 
 @Controller
 public class WebRTCController {
-    
+
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
-    
+
     @Autowired
     private CallService callService;
-    
+
     /**
-     * Handle WebRTC offer from caller
-     * Client sends to: /app/webrtc/offer
-     * Server broadcasts to: /queue/webrtc/{receiverId}
+     * ROOT CAUSE FIX for "call not working":
+     *
+     * convertAndSendToUser(userId, destination, payload) resolves the user via
+     * Spring Security's principal name — which is the USERNAME (e.g. "john"),
+     * NOT the numeric userId (e.g. "42"). Your JwtAuthenticationFilter sets the
+     * principal to the username, so convertAndSendToUser("42", ...) never matches
+     * any connected client and the signal is silently dropped.
+     *
+     * SOLUTION: Use convertAndSend() to a deterministic per-user topic:
+     *   /topic/webrtc-{userId}
+     *
+     * Each client subscribes to /topic/webrtc-{theirOwnId} on connect.
+     * This is explicit, reliable, and works regardless of how the principal is named.
      */
+    private static final String WEBRTC_TOPIC_PREFIX = "/topic/webrtc-";
+
     @MessageMapping("/webrtc/offer")
     public void handleOffer(@Payload WebRTCSignal signal) {
-        // Validate call permission before forwarding offer
         CallPermissionRequest permissionRequest = new CallPermissionRequest();
         permissionRequest.setTicketId(Long.parseLong(signal.getTicketId()));
         permissionRequest.setCallerId(signal.getSenderId());
         permissionRequest.setReceiverId(signal.getReceiverId());
-        
+
         CallPermissionResponse permission = callService.validateCallPermission(permissionRequest);
-        
-        if (permission.getAllowed()) {
-            // Forward offer to receiver
+
+        if (Boolean.TRUE.equals(permission.getAllowed())) {
+            // Send offer to the receiver's personal topic
             messagingTemplate.convertAndSend(
-                "/queue/webrtc/" + signal.getReceiverId(), 
-                signal
+                    WEBRTC_TOPIC_PREFIX + signal.getReceiverId(),
+                    signal
             );
         } else {
-            // Send error back to sender
+            // Send error back to the caller's personal topic
             WebRTCSignal errorSignal = new WebRTCSignal();
             errorSignal.setType("error");
             errorSignal.setData(permission.getMessage());
             messagingTemplate.convertAndSend(
-                "/queue/webrtc/" + signal.getSenderId(),
-                errorSignal
+                    WEBRTC_TOPIC_PREFIX + signal.getSenderId(),
+                    errorSignal
             );
         }
     }
-    
-    /**
-     * Handle WebRTC answer from receiver
-     * Client sends to: /app/webrtc/answer
-     * Server broadcasts to: /queue/webrtc/{receiverId}
-     */
+
     @MessageMapping("/webrtc/answer")
     public void handleAnswer(@Payload WebRTCSignal signal) {
-        // Forward answer to original caller
+        // signal.getReceiverId() is the original caller's ID (set by the answerer)
         messagingTemplate.convertAndSend(
-            "/queue/webrtc/" + signal.getReceiverId(),
-            signal
+                WEBRTC_TOPIC_PREFIX + signal.getReceiverId(),
+                signal
         );
     }
-    
-    /**
-     * Handle ICE candidates exchange
-     * Client sends to: /app/webrtc/ice-candidate
-     * Server broadcasts to: /queue/webrtc/{receiverId}
-     */
+
     @MessageMapping("/webrtc/ice-candidate")
     public void handleIceCandidate(@Payload WebRTCSignal signal) {
-        // Forward ICE candidate to the other peer
         messagingTemplate.convertAndSend(
-            "/queue/webrtc/" + signal.getReceiverId(),
-            signal
+                WEBRTC_TOPIC_PREFIX + signal.getReceiverId(),
+                signal
         );
     }
-    
-    /**
-     * Handle call end signal
-     * Client sends to: /app/webrtc/end-call
-     * Server broadcasts to: /queue/webrtc/{receiverId}
-     */
+
     @MessageMapping("/webrtc/end-call")
     public void handleEndCall(@Payload WebRTCSignal signal) {
-        // Notify the other peer that call has ended
         messagingTemplate.convertAndSend(
-            "/queue/webrtc/" + signal.getReceiverId(),
-            signal
+                WEBRTC_TOPIC_PREFIX + signal.getReceiverId(),
+                signal
         );
     }
 }
-

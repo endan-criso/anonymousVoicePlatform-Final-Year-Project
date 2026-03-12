@@ -18,6 +18,6 @@ public class TicketRequest {
     private String description;
     
     @NotNull(message = "Product ID is required")
-    private Long productId;
+    private String productId;
 }
 

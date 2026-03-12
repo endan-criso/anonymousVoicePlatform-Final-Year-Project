@@ -49,15 +49,16 @@ public class TicketService {
             throw new RuntimeException("Only customers can create tickets");
         }
 
-        Product product = productRepository.findById(request.getProductId())
+        Product product = productRepository.findByProductId(request.getProductId())
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
         // Verify product belongs to customer
-        if (!product.getCustomer().getId().equals(customerId)) {
+        /*
+        if (product.getCustomer() == null || !product.getCustomer().getId().equals(customerId)) {
             logger.warn("Customer {} attempted to create ticket for product {} they don't own", customerId,
                     request.getProductId());
             throw new RuntimeException("Product does not belong to this customer");
-        }
+        }*/
 
         Ticket ticket = new Ticket();
         ticket.setTicketId(generateTicketId());

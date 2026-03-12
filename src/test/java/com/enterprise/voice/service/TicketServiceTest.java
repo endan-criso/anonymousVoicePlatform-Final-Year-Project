@@ -89,7 +89,7 @@ class TicketServiceTest {
         TicketRequest request = new TicketRequest();
         request.setSubject("Test Issue");
         request.setDescription("Test Description");
-        request.setProductId(1L);
+        request.setProductId("1L");
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(customer));
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
@@ -116,7 +116,7 @@ class TicketServiceTest {
         TicketRequest request = new TicketRequest();
         request.setSubject("Test Issue");
         request.setDescription("Test Description");
-        request.setProductId(1L);
+        request.setProductId("1L");
 
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
@@ -138,7 +138,7 @@ class TicketServiceTest {
         TicketRequest request = new TicketRequest();
         request.setSubject("Test Issue");
         request.setDescription("Test Description");
-        request.setProductId(1L);
+        request.setProductId("1L");
 
         when(userRepository.findById(3L)).thenReturn(Optional.of(nonCustomer));
 
@@ -157,7 +157,7 @@ class TicketServiceTest {
         TicketRequest request = new TicketRequest();
         request.setSubject("Test Issue");
         request.setDescription("Test Description");
-        request.setProductId(999L);
+        request.setProductId("999L");
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(customer));
         when(productRepository.findById(999L)).thenReturn(Optional.empty());
