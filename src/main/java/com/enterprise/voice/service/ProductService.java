@@ -1,9 +1,11 @@
 package com.enterprise.voice.service;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.enterprise.voice.model.Role;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,33 +31,35 @@ public class ProductService {
     private UserRepository userRepository;
 
     @Transactional
-    public ProductResponse createProduct(ProductRequest request) {
-        logger.info("Creating product: {}", request.getProductId());
+    public ProductResponse createProduct(ProductRequest request, Long agentId) {
 
-        if (productRepository.existsByProductId(request.getProductId())) {
-            logger.warn("Product creation failed: Product ID {} already exists", request.getProductId());
-            throw new RuntimeException("Product ID already exists");
+        User agent = userRepository.findById(agentId)
+                .orElseThrow(() -> new RuntimeException("Agent not found"));
+
+        if(agent.getRole() != Role.COMPANY_AGENT){
+            throw new RuntimeException("Only agents can create products");
         }
 
         Product product = new Product();
-        product.setProductId(request.getProductId());
+        product.setProductId(generateProductId());
         product.setProductName(request.getProductName());
         product.setDescription(request.getDescription());
-        product.setIsActive(true);
         product.setRegisteredAt(LocalDateTime.now());
 
-        if (request.getCustomerId() != null) {
-            User customer = userRepository.findById(request.getCustomerId())
-                    .orElseThrow(() -> new RuntimeException("Customer not found"));
-            product.setCustomer(customer);
-            logger.info("Product {} created and bound to customer {}", request.getProductId(),
-                    customer.getAnonymousId());
-        } else {
-            logger.info("Product {} created without customer binding", request.getProductId());
-        }
+        product.setAssignedAgent(agent);
 
         product = productRepository.save(product);
+
         return mapToResponse(product);
+    }
+
+    private String generateProductId() {
+        String timestamp = LocalDateTime.now()
+                .format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+
+        long count = productRepository.count() + 1;
+
+        return String.format("PRD-%s-%04d", timestamp, count);
     }
 
     @Transactional

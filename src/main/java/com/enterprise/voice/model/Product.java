@@ -37,6 +37,10 @@ public class Product {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id")
     private User customer;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "agent_id")
+    private User assignedAgent;
     
     @CreationTimestamp
     @Column(nullable = false, updatable = false)

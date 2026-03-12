@@ -4,153 +4,566 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>VoiceLink – Dashboard</title>
-  <link rel="stylesheet" href="css/dashboard.css" />
 
   <style>
-/* ── Ticket call button ─────────────────────────────────────────── */
-.btn-call {
-  background: #16a34a;
-  color: #fff;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-  transition: background 0.2s, transform 0.1s;
-}
-.btn-call:hover { background: #15803d; transform: translateY(-1px); }
-
-.btn-close-ticket {
-  background: #dc2626;
-  color: #fff;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-  transition: background 0.2s;
-}
-.btn-close-ticket:hover { background: #b91c1c; }
-
-.badge-call {
-  background: #dcfce7;
-  color: #166534;
-  font-size: 11px;
-  padding: 2px 7px;
-  border-radius: 10px;
+/* ══════════════════════════════════════════════════════════════════════
+   DESIGN TOKENS  (light mode)
+══════════════════════════════════════════════════════════════════════ */
+:root {
+  --bg:          #f1f5f9;
+  --surface:     #ffffff;
+  --surface-2:   #f8fafc;
+  --border:      #e2e8f0;
+  --primary:     #6366f1;
+  --primary-h:   #4f46e5;
+  --text:        #0f172a;
+  --text-muted:  #64748b;
+  --success:     #16a34a;
+  --danger:      #dc2626;
+  --warning:     #d97706;
+  --radius:      10px;
+  --sidebar-w:   240px;
+  --topbar-h:    60px;
+  --shadow:      0 1px 4px rgba(0,0,0,.08);
+  --shadow-md:   0 4px 16px rgba(0,0,0,.12);
 }
 
-.call-allowed-badge {
-  font-size: 12px;
-  color: #16a34a;
-  font-weight: 500;
+/* ── Dark mode ── */
+html.dark {
+  --bg:         #0f172a;
+  --surface:    #1e293b;
+  --surface-2:  #162032;
+  --border:     #334155;
+  --text:       #f1f5f9;
+  --text-muted: #94a3b8;
 }
 
-/* ── Incoming call overlay ──────────────────────────────────────── */
-.incoming-call-overlay {
+/* ══════════════════════════════════════════════════════════════════════
+   RESET / BASE
+══════════════════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   SIDEBAR
+══════════════════════════════════════════════════════════════════════ */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
   position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.55);
+  top: 0; left: 0; bottom: 0;
+  z-index: 200;
+  transition: transform .25s ease;
+}
+.sidebar-header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  animation: fadeIn 0.2s ease;
+  justify-content: space-between;
+  padding: 18px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.brand {
+  display: flex; align-items: center; gap: 10px;
+  font-weight: 700; font-size: 16px; color: var(--primary);
+}
+.brand-icon {
+  width: 32px; height: 32px;
+  background: var(--primary);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+}
+.brand-icon svg { width: 18px; height: 18px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+.close-sidebar-btn {
+  display: none;
+  background: none; border: none; cursor: pointer;
+  color: var(--text-muted); padding: 4px;
 }
 
+.nav { flex: 1; overflow-y: auto; padding: 12px 8px; }
+.nav-section-label {
+  display: block;
+  font-size: 10px; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--text-muted);
+  padding: 8px 10px 4px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 9px 12px; border-radius: 8px;
+  background: none; border: none; cursor: pointer;
+  color: var(--text-muted); font-size: 13.5px; font-weight: 500;
+  text-align: left; transition: background .15s, color .15s;
+}
+.nav-item:hover { background: var(--bg); color: var(--text); }
+.nav-item.active { background: #ede9fe; color: var(--primary); }
+html.dark .nav-item.active { background: rgba(99,102,241,.15); }
+
+.nav-icon { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+.nav-icon svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+.sidebar-footer {
+  padding: 14px 16px;
+  font-size: 11px; color: var(--text-muted);
+  border-top: 1px solid var(--border);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   MAIN
+══════════════════════════════════════════════════════════════════════ */
+.main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ── Top bar ── */
+.topbar {
+  height: var(--topbar-h);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px;
+  position: sticky; top: 0; z-index: 100;
+}
+.topbar-title { font-size: 14px; font-weight: 600; color: var(--text-muted); }
+.topbar-right { display: flex; align-items: center; gap: 8px; }
+
+.icon-btn-topbar {
+  width: 36px; height: 36px;
+  border-radius: 8px; border: none; cursor: pointer;
+  background: var(--bg);
+  color: var(--text-muted);
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s;
+}
+.icon-btn-topbar:hover { background: var(--border); }
+.icon-btn-topbar svg { width: 18px; height: 18px; }
+
+/* ── User menu ── */
+.user-menu-wrap { position: relative; }
+.user-menu-btn {
+  display: flex; align-items: center; gap: 8px;
+  background: none; border: 1px solid var(--border);
+  border-radius: 8px; padding: 6px 12px;
+  cursor: pointer; color: var(--text); font-size: 13px; font-weight: 500;
+  transition: background .15s;
+}
+.user-menu-btn:hover { background: var(--bg); }
+.avatar {
+  width: 28px; height: 28px;
+  background: var(--primary); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+.avatar svg { width: 16px; height: 16px; stroke: #fff; fill: none; stroke-width: 2; }
+
+.dropdown-menu {
+  display: none;
+  position: absolute; top: calc(100% + 6px); right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-md);
+  min-width: 160px; overflow: hidden; z-index: 300;
+}
+.dropdown-menu.active { display: block; }
+.dropdown-item {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; padding: 9px 14px;
+  background: none; border: none; cursor: pointer;
+  color: var(--text); font-size: 13px; text-align: left;
+  transition: background .15s;
+}
+.dropdown-item:hover { background: var(--bg); }
+.dropdown-item.danger { color: var(--danger); }
+.dropdown-item svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+.dropdown-separator { height: 1px; background: var(--border); margin: 4px 0; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   VIEW CONTAINER
+══════════════════════════════════════════════════════════════════════ */
+.view-container { flex: 1; padding: 28px 24px; }
+.view { display: none; }
+.view.active { display: block; }
+
+.view-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 24px; gap: 12px; flex-wrap: wrap;
+}
+.view-header h1 { font-size: 22px; font-weight: 700; color: var(--text); }
+.view-header p  { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--primary); color: #fff;
+  border: none; border-radius: 8px;
+  padding: 9px 16px; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: background .15s, transform .1s;
+  white-space: nowrap;
+}
+.btn:hover { background: var(--primary-h); transform: translateY(-1px); }
+.btn svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+.btn-secondary {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { background: var(--border); }
+
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+
+/* ── Icon button ── */
+.icon-btn {
+  width: 32px; height: 32px; border-radius: 7px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted); transition: background .15s, color .15s;
+}
+.icon-btn:hover { background: var(--border); color: var(--text); }
+.icon-btn.danger:hover { background: #fef2f2; color: var(--danger); border-color: #fecaca; }
+.icon-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   PRODUCT CARDS
+══════════════════════════════════════════════════════════════════════ */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+.product-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  display: flex; flex-direction: column; gap: 8px;
+  box-shadow: var(--shadow);
+  transition: box-shadow .2s, transform .2s;
+}
+.product-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.product-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.product-card-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: #ede9fe;
+  display: flex; align-items: center; justify-content: center;
+}
+.product-card-icon svg { width: 20px; height: 20px; stroke: var(--primary); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.product-id { font-size: 11px; font-weight: 700; color: var(--primary); letter-spacing: .04em; }
+.product-card h3 { font-size: 15px; font-weight: 600; color: var(--text); }
+.product-card p  { font-size: 12px; color: var(--text-muted); line-height: 1.5; flex: 1; }
+.product-card-actions { display: flex; gap: 6px; justify-content: flex-end; margin-top: 4px; }
+
+/* Skeleton */
+.skeleton-card {
+  height: 160px; border-radius: var(--radius);
+  background: linear-gradient(90deg, var(--border) 25%, var(--surface-2) 50%, var(--border) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+/* ══════════════════════════════════════════════════════════════════════
+   TICKET CARDS
+══════════════════════════════════════════════════════════════════════ */
+.tickets-list { display: flex; flex-direction: column; gap: 12px; }
+.ticket-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  box-shadow: var(--shadow);
+  transition: box-shadow .2s;
+}
+.ticket-card:hover { box-shadow: var(--shadow-md); }
+.ticket-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap; margin-bottom: 8px;
+}
+.ticket-card-header h3 { font-size: 15px; font-weight: 600; color: var(--text); }
+.ticket-badges { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.ticket-card > p { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 14px; }
+.ticket-card-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; flex-wrap: wrap;
+}
+.ticket-meta { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.ticket-meta span { font-size: 12px; color: var(--text-muted); }
+
+/* Badges */
+.badge {
+  display: inline-block;
+  font-size: 11px; font-weight: 600; padding: 2px 8px;
+  border-radius: 20px; letter-spacing: .03em;
+}
+.badge-open   { background: #dbeafe; color: #1d4ed8; }
+.badge-closed { background: #f1f5f9; color: var(--text-muted); }
+.badge-pending { background: #fef3c7; color: #92400e; }
+.badge-call   { background: #dcfce7; color: #166534; }
+
+/* Call / close buttons */
+.btn-call {
+  background: #16a34a; color: #fff; border: none;
+  padding: 6px 12px; border-radius: 6px;
+  cursor: pointer; font-size: 13px; font-weight: 600;
+  transition: background .2s, transform .1s;
+}
+.btn-call:hover { background: #15803d; transform: translateY(-1px); }
+.btn-close-ticket {
+  background: #dc2626; color: #fff; border: none;
+  padding: 6px 12px; border-radius: 6px;
+  cursor: pointer; font-size: 13px; font-weight: 600;
+  transition: background .2s;
+}
+.btn-close-ticket:hover { background: #b91c1c; }
+.call-allowed-badge { font-size: 12px; color: #16a34a; font-weight: 500; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   MODALS
+══════════════════════════════════════════════════════════════════════ */
+.modal-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 400;
+}
+.modal-overlay.active { display: block; }
+
+.modal-dialog {
+  display: none;
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--surface);
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.25);
+  width: min(480px, calc(100vw - 32px));
+  z-index: 500;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modal-dialog.active { display: block; }
+
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 24px 0; margin-bottom: 16px;
+}
+.modal-title { font-size: 17px; font-weight: 700; color: var(--text); }
+.modal-close {
+  width: 30px; height: 30px; border-radius: 8px;
+  background: var(--bg); border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted); transition: background .15s;
+}
+.modal-close:hover { background: var(--border); }
+.modal-close svg { width: 16px; height: 16px; }
+
+.modal-body  { padding: 0 24px; }
+.modal-footer {
+  display: flex; justify-content: flex-end; gap: 10px;
+  padding: 16px 24px 24px;
+}
+
+.form-field { margin-bottom: 16px; }
+.form-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .04em; }
+.form-input,
+.form-textarea,
+.form-select {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+  transition: border-color .15s, box-shadow .15s;
+  outline: none;
+}
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99,102,241,.15); }
+.form-textarea { resize: vertical; min-height: 90px; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   TOASTS
+══════════════════════════════════════════════════════════════════════ */
+.toast-container {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; gap: 8px;
+  z-index: 9000; pointer-events: none;
+}
+.toast {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  box-shadow: var(--shadow-md);
+  min-width: 260px; max-width: 380px;
+  animation: toastIn .25s ease;
+  pointer-events: auto;
+}
+.toast.removing { animation: toastOut .25s ease forwards; }
+@keyframes toastIn  { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+@keyframes toastOut { from { opacity:1; } to { opacity:0; transform:translateY(8px); } }
+.toast-icon { font-size: 16px; flex-shrink: 0; }
+.toast-body { display: flex; flex-direction: column; gap: 2px; }
+.toast-title { font-size: 13px; font-weight: 700; color: var(--text); }
+.toast-msg   { font-size: 12.5px; color: var(--text-muted); }
+
+/* ══════════════════════════════════════════════════════════════════════
+   EMPTY STATE
+══════════════════════════════════════════════════════════════════════ */
+.empty-state {
+  text-align: center; padding: 60px 24px;
+  color: var(--text-muted);
+}
+.empty-state-icon { font-size: 48px; margin-bottom: 16px; }
+.empty-state h3   { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.empty-state p    { font-size: 13px; margin-bottom: 20px; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   INCOMING CALL OVERLAY
+══════════════════════════════════════════════════════════════════════ */
+.incoming-call-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.55);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999;
+  animation: fadeIn .2s ease;
+}
 .incoming-call-card {
-  background: var(--surface, #fff);
+  background: var(--surface);
   border-radius: 20px;
   padding: 36px 40px;
   text-align: center;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  box-shadow: 0 20px 60px rgba(0,0,0,.3);
   min-width: 300px;
 }
-
 .incoming-ring-icon {
-  font-size: 52px;
-  margin-bottom: 12px;
-  display: block;
-  animation: ringShake 0.5s infinite;
+  font-size: 52px; margin-bottom: 12px; display: block;
+  animation: ringShake .5s infinite;
 }
-
 @keyframes ringShake {
   0%,100% { transform: rotate(0deg); }
-  20%      { transform: rotate(-15deg); }
-  40%      { transform: rotate(15deg); }
-  60%      { transform: rotate(-10deg); }
-  80%      { transform: rotate(10deg); }
+  20%     { transform: rotate(-15deg); }
+  40%     { transform: rotate(15deg); }
+  60%     { transform: rotate(-10deg); }
+  80%     { transform: rotate(10deg); }
 }
-
-.incoming-call-card h3 {
-  font-size: 22px;
-  margin-bottom: 8px;
-  color: var(--text, #111);
-}
-
-.incoming-call-card p {
-  color: var(--text-muted, #6b7280);
-  margin-bottom: 28px;
-  font-size: 14px;
-}
-
-.incoming-call-actions {
-  display: flex;
-  gap: 16px;
-  justify-content: center;
-}
+.incoming-call-card h3 { font-size: 22px; margin-bottom: 8px; color: var(--text); }
+.incoming-call-card p  { color: var(--text-muted); margin-bottom: 28px; font-size: 14px; }
+.incoming-call-actions { display: flex; gap: 16px; justify-content: center; }
 
 .btn-reject {
-  background: #dc2626;
-  color: #fff;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 50px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
+  background: #dc2626; color: #fff; border: none;
+  padding: 12px 24px; border-radius: 50px;
+  font-size: 15px; font-weight: 600; cursor: pointer;
+  transition: background .2s, transform .1s;
 }
 .btn-reject:hover { background: #b91c1c; transform: scale(1.05); }
-
 .btn-accept {
-  background: #16a34a;
-  color: #fff;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 50px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
+  background: #16a34a; color: #fff; border: none;
+  padding: 12px 24px; border-radius: 50px;
+  font-size: 15px; font-weight: 600; cursor: pointer;
+  transition: background .2s, transform .1s;
 }
 .btn-accept:hover { background: #15803d; transform: scale(1.05); }
 
-/* ── Ticket-bound voice widget (no FAB, always attached to ticket) ── */
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+
+/* ══════════════════════════════════════════════════════════════════════
+   VOICE WIDGET
+══════════════════════════════════════════════════════════════════════ */
 #voiceWidget {
   position: fixed;
-  bottom: 24px;
-  right: 24px;
+  bottom: 20px; right: 20px;
   z-index: 1000;
 }
-
-#voiceWidget .voice-panel {
+.voice-widget-inner {
+  background: var(--surface);
+  border-radius: 14px;
+  box-shadow: 0 8px 30px rgba(0,0,0,.2);
+  width: 260px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.voice-widget-header {
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 14px;
+  font-size: 13px; font-weight: 600; color: var(--text);
+  text-align: center;
+}
+.voice-widget-body {
+  padding: 20px;
+  text-align: center;
+}
+#voiceStatusText {
+  font-size: 26px; font-weight: 700;
+  font-family: 'Courier New', monospace;
+  color: var(--text);
+  margin-bottom: 16px;
   display: block;
 }
-
-.voice-panel-header {
-  text-align: center;
-  font-weight: 600;
-  font-size: 15px;
-  padding: 12px 16px 4px;
-  color: var(--text, #111);
+.btn-end-call {
+  width: 100%;
+  background: #dc2626; color: #fff; border: none;
+  padding: 10px 20px; border-radius: 50px;
+  cursor: pointer; font-weight: 600; font-size: 14px;
+  transition: background .2s;
 }
+.btn-end-call:hover { background: #b91c1c; }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+/* ══════════════════════════════════════════════════════════════════════
+   MOBILE
+══════════════════════════════════════════════════════════════════════ */
+.mobile-menu-btn {
+  display: none;
+  position: fixed; top: 12px; left: 12px; z-index: 250;
+  width: 38px; height: 38px; border-radius: 8px;
+  background: var(--surface); border: 1px solid var(--border);
+  cursor: pointer; align-items: center; justify-content: center;
+  color: var(--text);
+}
+.mobile-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.4);
+  z-index: 150;
+}
+.mobile-overlay.active { display: block; }
+
+@media (max-width: 1024px) {
+  .mobile-menu-btn { display: flex; }
+  .close-sidebar-btn { display: flex; }
+  .sidebar {
+    transform: translateX(-100%);
+  }
+  .sidebar.mobile-open { transform: translateX(0); }
+  .main { margin-left: 0; }
+}
+@media (max-width: 600px) {
+  .view-container { padding: 20px 16px; }
+  .topbar { padding: 0 16px; }
+  .topbar-title { font-size: 12px; }
+  .cards-grid { grid-template-columns: 1fr; }
 }
 </style>
 </head>
@@ -191,27 +604,25 @@
     <span class="nav-section-label">Main</span>
 
     <button class="nav-item active" onclick="handleNavClick('productsView', this)">
-        <span class="nav-icon">
-          <svg viewBox="0 0 24 24">
-            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
-            <line x1="12" y1="22.08" x2="12" y2="12"/>
-          </svg>
-        </span>
+      <span class="nav-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+          <line x1="12" y1="22.08" x2="12" y2="12"/>
+        </svg>
+      </span>
       Products
     </button>
 
     <button class="nav-item" onclick="handleNavClick('ticketsView', this)">
-        <span class="nav-icon">
-          <svg viewBox="0 0 24 24">
-            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
-            <polyline points="13 2 13 9 20 9"/>
-          </svg>
-        </span>
+      <span class="nav-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+          <polyline points="13 2 13 9 20 9"/>
+        </svg>
+      </span>
       Support Tickets
     </button>
-
-
   </nav>
 
   <div class="sidebar-footer">© 2026 VoiceLink</div>
@@ -267,7 +678,7 @@
     </div>
   </div>
 
-  <!-- Views -->
+  <!-- ── Views ── -->
   <div class="view-container">
 
     <!-- Products View -->
@@ -282,7 +693,6 @@
           Create Product
         </button>
       </div>
-
       <div id="productsList" class="cards-grid">
         <!-- Populated by JS -->
       </div>
@@ -300,20 +710,13 @@
           Create Ticket
         </button>
       </div>
-
-      <div id="ticketsList" class="tickets-list">
-        <!-- Populated by JS -->
-      </div>
+      <div id="ticketsList" class="tickets-list"></div>
     </div>
-
-
 
   </div><!-- /view-container -->
 </main>
 
-
-<!-- Voice widget moved into ticket cards -->
-
+<!-- ══ CREATE PRODUCT MODAL ═══════════════════════════════════════════ -->
 <div class="modal-overlay" id="productModalOverlay" onclick="closeProductModal()"></div>
 <div class="modal-dialog" id="productModal">
   <div class="modal-header">
@@ -325,7 +728,6 @@
       </svg>
     </button>
   </div>
-
   <form id="createProductForm" onsubmit="submitProductModal(event)">
     <div class="modal-body">
       <div class="form-field">
@@ -360,22 +762,19 @@
       </svg>
     </button>
   </div>
-
   <form id="createTicketForm" onsubmit="submitTicketModal(event)">
     <div class="modal-body">
       <div class="form-field">
         <label class="form-label" for="modalTicketSubject">Subject</label>
         <input type="text" id="modalTicketSubject" class="form-input" placeholder="Brief description of the issue" required />
       </div>
-
-      <!-- BUG FIX: Products are loaded into this dropdown when modal opens (not on page load) -->
       <div class="form-field">
         <label class="form-label" for="modalTicketProduct">Product</label>
+        <!-- Products loaded fresh each time modal opens -->
         <select id="modalTicketProduct" class="form-select" required>
-          <option value="">Loading…</option>
+          <option value="">Select a product</option>
         </select>
       </div>
-
       <div class="form-field">
         <label class="form-label" for="modalTicketDescription">Description</label>
         <textarea id="modalTicketDescription" class="form-textarea" placeholder="Describe the issue in detail…" rows="4" required></textarea>
@@ -388,16 +787,17 @@
   </form>
 </div>
 
-<!-- ══ TOAST CONTAINER ═══════════════════════════════════════════════ -->
-<div class="toast-container" id="toastContainer"></div>
-
-<!-- Single JS file — no inline scripts that could conflict -->
-<script src="js/dashboard.js"></script>
-
-<!-- ══ INCOMING CALL NOTIFICATION ════════════════════════════════════ -->
+<!-- ══ INCOMING CALL OVERLAY ═════════════════════════════════════════ -->
+<!--
+  FIX: Removed inline style="display:none" — display is now controlled
+  entirely by JS (style.display = 'flex' / 'none'). The CSS default
+  hides the element via a separate rule in the <style> block above.
+  Having both display:none inline AND JS trying to set display:flex
+  can cause race conditions in some browsers, so one source of truth wins.
+-->
 <div class="incoming-call-overlay" id="incomingCallOverlay" style="display:none;">
   <div class="incoming-call-card">
-    <div class="incoming-ring-icon">📞</div>
+    <span class="incoming-ring-icon">📞</span>
     <h3>Incoming Call</h3>
     <p id="incomingCallInfo">A customer is calling about their ticket</p>
     <div class="incoming-call-actions">
@@ -407,36 +807,24 @@
   </div>
 </div>
 
-<!-- ══ VOICE PANEL (ticket-bound) ════════════════════════════════════ -->
-<div class="voice-widget" id="voiceWidget" style="display:none;">
-  <div class="voice-panel active" id="voicePanel">
-    <div class="voice-panel-header">
-      <span id="voiceTicketLabel" style="font-size:12px;opacity:0.7;margin-bottom:2px;display:block;">Ticket #—</span>
-      <span id="voiceStatusText">Ready to call</span>
+<!-- ══ VOICE WIDGET (floating, shown during active call) ═════════════ -->
+<div id="voiceWidget" style="display:none;">
+  <div class="voice-widget-inner">
+    <div class="voice-widget-header" id="voiceTicketLabel">Ticket #—</div>
+    <div class="voice-widget-body">
+      <span id="voiceStatusText">00:00</span>
+      <button class="btn-end-call" onclick="endCall()">📵 End Call</button>
     </div>
-    <div class="mic-display" id="micDisplay">
-      <span id="phoneEmoji" style="font-size:36px;color:var(--text-muted);">📞</span>
-      <div class="voice-bars" id="voiceBarsEl">
-        <div class="voice-bar"></div>
-        <div class="voice-bar"></div>
-        <div class="voice-bar"></div>
-        <div class="voice-bar"></div>
-        <div class="voice-bar"></div>
-      </div>
-    </div>
-    <div class="call-controls" id="voiceIdleControls">
-      <button class="ctrl-btn" onclick="closeVoicePanel()">Cancel</button>
-      <button class="ctrl-btn primary" onclick="startCall()">📞 Start Call</button>
-    </div>
-    <div class="call-controls" id="voiceActiveControls" style="display:none;">
-      <button class="ctrl-icon-btn" id="muteBtn" onclick="toggleMute()" title="Mute">🎤</button>
-      <button class="ctrl-btn primary" style="flex:1;" onclick="closeVoicePanel()">Close</button>
-      <button class="ctrl-icon-btn end-call" onclick="endCall()" title="End Call">📵</button>
-    </div>
-    <p class="privacy-note" id="voicePrivacyNote">🔒 Your identity is protected</p>
   </div>
 </div>
 
-<!-- ══ TOAST CONTAINER (keep here) ══════════════════════════════════ -->
+<!-- ══ TOAST CONTAINER ═══════════════════════════════════════════════ -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- WebSocket / STOMP libraries required for WebRTC signaling -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
+<script src="js/dashboard.js"></script>
 </body>
 </html>

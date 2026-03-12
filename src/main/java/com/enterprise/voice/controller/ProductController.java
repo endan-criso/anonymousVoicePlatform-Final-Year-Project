@@ -30,10 +30,13 @@ public class ProductController {
     private ProductService productService;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'COMPANY_AGENT', 'CUSTOMER')")
-    public ResponseEntity<?> createProduct(@Valid @RequestBody ProductRequest request) {
+    @PreAuthorize("hasRole('COMPANY_AGENT')")
+    public ResponseEntity<?> createProduct(
+            @Valid @RequestBody ProductRequest request,
+            @AuthenticationPrincipal UserPrincipal currentUser) {
+
         try {
-            ProductResponse response = productService.createProduct(request);
+            ProductResponse response = productService.createProduct(request, currentUser.getId());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());

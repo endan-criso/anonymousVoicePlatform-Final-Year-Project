@@ -10,14 +10,28 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CallLogResponse {
-    
-    private Long id;
+
+    // Numeric DB id — also used as callLogId by the JS poller
+    private Long   id;
+
+    // FIX: was missing entirely from the response — JS poller reads c.callLogId
+    private Long   callLogId;
+
     private String ticketId;
+
+    // Numeric DB ids — needed by the JS receiverId filter
+    private Long   callerId;
+    private Long   receiverId;
+
+    // Anonymous display ids — what the real backend was sending instead of the above
     private String callerAnonymousId;
     private String receiverAnonymousId;
+
     private LocalDateTime startTime;
     private LocalDateTime endTime;
-    private Long duration; // in seconds
-    private Boolean wasSuccessful;
-}
+    private Long          duration;
+    private Boolean       wasSuccessful;
 
+    // FIX: was missing from the response — JS poller reads c.callStatus
+    private String callStatus;
+}

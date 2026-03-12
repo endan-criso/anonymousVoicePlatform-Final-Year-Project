@@ -68,6 +68,15 @@ public class TicketService {
         ticket.setCustomer(customer);
         ticket.setProduct(product);
 
+        User agent = product.getAssignedAgent();
+
+
+        if (agent == null) {
+            throw new RuntimeException("Product has no assigned agent");
+        }
+
+        ticket.setAssignedAgent(agent);
+
         ticket = ticketRepository.save(ticket);
         logger.info("Ticket created successfully: {} for customer: {}", ticket.getTicketId(),
                 customer.getAnonymousId());

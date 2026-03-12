@@ -9,14 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CallPermissionRequest {
-    
-    @NotNull(message = "Ticket ID is required")
-    private Long ticketId;
-    
-    @NotNull(message = "Caller ID is required")
-    private Long callerId;
-    
-    @NotNull(message = "Receiver ID is required")
-    private Long receiverId;
-}
 
+    @NotNull(message = "Ticket ID is required")
+    private String ticketId;
+}
